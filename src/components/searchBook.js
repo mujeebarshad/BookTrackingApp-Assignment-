@@ -1,28 +1,22 @@
 import React, { useState } from "react";
 import "../App.css";
 import { search } from '../BooksAPI';
+import { useNavigate } from "react-router-dom";
 
-export const SearchBook = ({ showSearchPage, setShowSearchpage, shelves, setShelves, bookRack, setBookRack }) => {
+export const SearchBook = ({ shelves, setShelves, bookRack, setBookRack, handleOnSelect }) => {
   const [searchedBooks, setSearchedBooks] = useState([]);
+  const navigate = useNavigate();
+
   const onSearch = async (event) => {
-    if (event.key === 'Enter') {
-      let response = await search(event.target.value, 50);
+    let response = await search(event.target.value, 50);
+    if (response && !response?.error) {
       let _searchedBooks = response.map((res) => {
         return { authors: res.authors, id: res.id, title: res.title, image: res.imageLinks?.thumbnail } 
       });
       setSearchedBooks(_searchedBooks)
+    } else {
+      setSearchedBooks([]);
     }
-  }
-
-  const handleOnSelect = (event, bookId) => {
-    let book = searchedBooks.find((book) => book.id === bookId);
-    let _shelves = {...shelves};
-    if (!_shelves[event.target.value]) _shelves[event.target.value] = [];
-    _shelves[event.target.value].push(book);
-    let _bookRack = bookRack;
-    _bookRack[book.id] = event.target.value;
-    setBookRack(_bookRack);
-    setShelves(_shelves);
   }
 
   return (
@@ -30,7 +24,7 @@ export const SearchBook = ({ showSearchPage, setShowSearchpage, shelves, setShel
     <div className="search-books-bar">
       <a
         className="close-search"
-        onClick={() => setShowSearchpage(!showSearchPage)}
+        onClick={() => navigate('/')}
       >
         Close
       </a>
@@ -56,8 +50,8 @@ export const SearchBook = ({ showSearchPage, setShowSearchpage, shelves, setShel
                 }}
               ></div>
               <div className="book-shelf-changer">
-                <select value={bookRack[book.id]?? 'none'} onChange={(e) => handleOnSelect(e, book.id)}>
-                  <option value="none" disabled>
+                <select value={bookRack[book.id]?? 'none'} onChange={(e) => handleOnSelect(e, book.id, searchedBooks)}>
+                  <option disabled>
                     Add to...
                   </option>
                   <option value="currentlyReading">
@@ -65,6 +59,7 @@ export const SearchBook = ({ showSearchPage, setShowSearchpage, shelves, setShel
                   </option>
                   <option value="wantToRead">Want to Read</option>
                   <option value="read">Read</option>
+                  <option value="none">None</option>
                 </select>
               </div>
             </div>
